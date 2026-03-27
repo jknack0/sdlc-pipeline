@@ -1,0 +1,19 @@
+{
+  "name": "sdlc-pipeline",
+  "description": "Full SDLC agent pipeline — Ideator, PO, Compliance, Architect, UX, Engineer, QA, and Sales coordinated by an orchestrator",
+  "version": "1.0.0",
+  "author": {
+    "name": "sdlc-pipeline"
+  },
+  "license": "MIT",
+  "keywords": [
+    "sdlc",
+    "pipeline",
+    "agents",
+    "tdd",
+    "compliance",
+    "product-management",
+    "architecture",
+    "qa"
+  ]
+}
