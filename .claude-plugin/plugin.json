@@ -1,6 +1,6 @@
 {
   "name": "sdlc-pipeline",
-  "description": "Full SDLC agent pipeline — Ideator, PO, Compliance, Architect, UX, Engineer, QA, and Sales coordinated by an orchestrator",
+  "description": "Full SDLC agent pipeline — Ideator, PO, Compliance, Architect, UX, QA/SDET, and Engineer (Team) coordinated by an orchestrator",
   "version": "1.0.0",
   "author": {
     "name": "sdlc-pipeline"

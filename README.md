@@ -1,6 +1,6 @@
 # SDLC Pipeline — Claude Code Plugin
 
-A full software development lifecycle pipeline for Claude Code. Type `/feature` and watch your idea go from concept to shipped code with customer docs.
+A full software development lifecycle pipeline for Claude Code. Type `/feature` and watch your idea go from concept to shipped code.
 
 ## The Pipeline
 
@@ -14,9 +14,6 @@ A full software development lifecycle pipeline for Claude Code. Type `/feature` 
         ▼
    ┌──────────┐
    │    PO    │  Requirements, acceptance criteria, scope
-   └────┬─────┘
-        ▼
-   ┌─ GATE ───┐  User approves spec
    └────┬─────┘
         ▼
    ┌────────────┐
@@ -38,18 +35,14 @@ A full software development lifecycle pipeline for Claude Code. Type `/feature` 
    └────┬─────┘
         ▼
    ┌──────────┐
-   │ ENGINEER │  TDD implementation
+   │ QA/SDET  │  Test plan & test code (BEFORE implementation)
    └────┬─────┘
         ▼
-   ┌──────────┐
-   │    QA    │  Independent verification & sign-off
-   └────┬─────┘
+   ┌───────────────┐
+   │ ENGINEER TEAM │  Parallel TDD implementation
+   └──────┬────────┘
         ▼
-   ┌─ GATE ───┐  No critical/high issues
-   └────┬─────┘
-        ▼
-   ┌──────────┐
-   │  SALES   │  Customer docs & talking points
+   ┌─ GATE ───┐  All QA tests pass
    └────┬─────┘
         ▼
     ✅ DONE
@@ -90,11 +83,17 @@ Start a new Claude Code session. You should see the pipeline is available. Type 
 
 The orchestrator takes over and runs each phase. You'll be asked for input at gate checkpoints:
 
-1. **After Ideation** — Orchestrator presents refined concept
-2. **After PO** — You approve or revise the feature spec
-3. **After Compliance** — Assessment must pass (automatic gate)
-4. **After UX** — You approve or revise the design
-5. **After QA** — Sign-off must pass (automatic gate)
+1. **After Compliance** — Assessment must pass (automatic gate)
+2. **After UX** — You approve or revise the design
+3. **After Engineering** — All QA/SDET tests must pass (automatic gate)
+
+## How It Works
+
+The pipeline uses a **test-first** approach:
+
+- **QA/SDET writes tests before implementation** — executable test code organized by domain, covering every acceptance criterion, compliance condition, and UX flow
+- **Engineer dispatches a team** — the Lead Engineer breaks work into domains and spawns multiple engineer sub-agents in parallel, each implementing their domain to pass QA's pre-written tests
+- **Verification is automatic** — the full test suite must pass before the feature is marked complete
 
 ## What Gets Produced
 
@@ -107,9 +106,8 @@ Each feature creates a documentation trail in `docs/sdlc/[feature-name]/`:
 | `03-compliance.md` | Compliance | Regulatory assessment, conditions |
 | `04-architecture.md` | Architect | System design, data model, APIs |
 | `05-ux-design.md` | UX | User flows, states, interactions |
-| `06-implementation-plan.md` | Engineer | Task breakdown with TDD steps |
-| `07-test-report.md` | QA | Verification results, sign-off |
-| `08-release-materials.md` | Sales | Customer docs, talking points, FAQ |
+| `06-test-plan.md` | QA/SDET | Test plan, acceptance tests, test code |
+| `07-implementation-plan.md` | Engineer | Task breakdown, team assignment, results |
 
 ## Customization
 

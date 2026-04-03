@@ -17,7 +17,7 @@ escape_for_json() {
 }
 
 pipeline_escaped=$(escape_for_json "$using_pipeline_content")
-session_context="<SDLC-PIPELINE>\nYou have access to a full SDLC pipeline.\n\nType /feature to start the pipeline for a new feature.\n\nThe pipeline runs: Ideator → PO → Compliance → Architect → UX → Engineer → QA → Sales\n\nEach phase is a skill you invoke with the Skill tool. The orchestrator skill coordinates everything.\n\nFor any development work, check if a pipeline skill applies before proceeding.\n</SDLC-PIPELINE>"
+session_context="<SDLC-PIPELINE>\nYou have access to a full SDLC pipeline.\n\nType /feature to start the pipeline for a new feature.\n\nThe pipeline runs: Ideator → PO → Compliance → Architect → UX → QA/SDET → Engineer (Team)\n\nEach phase is a skill you invoke with the Skill tool. The orchestrator skill coordinates everything.\n\nFor any development work, check if a pipeline skill applies before proceeding.\n</SDLC-PIPELINE>"
 
 if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
   printf '{\n  "additional_context": "%s"\n}\n' "$session_context"

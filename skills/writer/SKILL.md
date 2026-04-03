@@ -35,9 +35,8 @@ Map the phase to the correct filename:
 | compliance | `03-compliance.md` |
 | architect | `04-architecture.md` |
 | ux-designer | `05-ux-design.md` |
-| engineer | `06-implementation-plan.md` |
-| qa-engineer | `07-test-report.md` |
-| sales-enablement | `08-release-materials.md` |
+| qa-engineer | `06-test-plan.md` |
+| engineer | `07-implementation-plan.md` |
 
 Target path: `docs/sdlc/[feature-name]/[filename]`
 

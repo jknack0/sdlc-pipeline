@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: Use when coordinating the full SDLC pipeline for a feature — manages handoffs between Ideator, PO, Compliance, Architect, UX, Engineer, QA, and Sales agents
+description: Use when coordinating the full SDLC pipeline for a feature — manages handoffs between Ideator, PO, Compliance, Architect, UX, QA/SDET, and Engineer agents
 ---
 
 # Orchestrator — SDLC Pipeline Controller
@@ -20,34 +20,29 @@ digraph pipeline {
 
     ideator [label="1. IDEATOR\nExplore & expand the idea"];
     po [label="2. PRODUCT OWNER\nRequirements & acceptance criteria"];
-    gate_spec [label="GATE: User approves spec" shape=diamond style=filled fillcolor="#ffcccc"];
     compliance [label="3. COMPLIANCE\nRegulatory assessment" style=filled fillcolor="#ffffcc"];
     gate_compliance [label="GATE: PASS or\nPASS_WITH_CONDITIONS" shape=diamond style=filled fillcolor="#ffcccc"];
     architect [label="4. ARCHITECT\nTechnical design & boundaries"];
     ux [label="5. UX DESIGNER\nUser flows & interaction design"];
     gate_design [label="GATE: User approves\ndesign direction" shape=diamond style=filled fillcolor="#ffcccc"];
-    engineer [label="6. ENGINEER\nTDD implementation"];
-    qa [label="7. QA ENGINEER\nTest plan & verification"];
-    gate_qa [label="GATE: QA sign-off" shape=diamond style=filled fillcolor="#ffcccc"];
-    sales [label="8. SALES ENABLEMENT\nCustomer docs & talking points"];
+    qa [label="6. QA / SDET\nTest plan & test code"];
+    engineer [label="7. ENGINEER (Team)\nParallel TDD implementation"];
+    gate_verify [label="GATE: All tests pass" shape=diamond style=filled fillcolor="#ffcccc"];
     done [label="✅ FEATURE COMPLETE" shape=doublecircle style=filled fillcolor="#ccffcc"];
 
     ideator -> po;
-    po -> gate_spec;
-    gate_spec -> compliance [label="approved"];
-    gate_spec -> po [label="revise" style=dashed];
+    po -> compliance;
     compliance -> gate_compliance;
     gate_compliance -> architect [label="PASS"];
     gate_compliance -> po [label="FAIL\nrevise requirements" style=dashed];
     architect -> ux;
     ux -> gate_design;
-    gate_design -> engineer [label="approved"];
+    gate_design -> qa [label="approved"];
     gate_design -> ux [label="revise" style=dashed];
-    engineer -> qa;
-    qa -> gate_qa;
-    gate_qa -> sales [label="all clear"];
-    gate_qa -> engineer [label="critical issues" style=dashed];
-    sales -> done;
+    qa -> engineer;
+    engineer -> gate_verify;
+    gate_verify -> done [label="all tests pass"];
+    gate_verify -> engineer [label="failing tests" style=dashed];
 }
 ```
 
@@ -69,10 +64,9 @@ Gates are mandatory. You CANNOT proceed without approval.
 
 | Gate | After | Condition | On Failure |
 |------|-------|-----------|------------|
-| **Spec Approval** | PO | User explicitly says "approved" or equivalent | Revise with PO |
 | **Compliance** | Compliance | Assessment is PASS or PASS_WITH_CONDITIONS | Return to PO to revise requirements |
 | **Design Approval** | UX | User approves the design direction | Revise with UX |
-| **QA Sign-off** | QA | No critical/high issues open, all tests pass | Return to Engineer to fix |
+| **Verification** | Engineer | All QA/SDET tests pass, no critical/high issues | Return to Engineer to fix |
 
 **Gate protocol:**
 ```
@@ -81,6 +75,13 @@ Ask: "Does this look good? Approve to proceed, or tell me what to change." →
   IF approved → Mark gate ✅, proceed
   IF changes requested → Loop back to that phase's skill
   IF rejected → Loop back to the PREVIOUS phase
+```
+
+**Verification Gate protocol (after Engineer):**
+```
+Run the full test suite →
+  IF all tests pass → Mark gate ✅, feature complete
+  IF tests fail → Return to Engineer with failing test details
 ```
 
 ## Deliverables
@@ -94,9 +95,8 @@ Each phase produces a document saved to `docs/sdlc/[feature-name]/`:
 | Compliance | `03-compliance.md` | Regulatory assessment, conditions, required controls |
 | Architect | `04-architecture.md` | System design, data flow, API boundaries, tech choices |
 | UX | `05-ux-design.md` | User flows, wireframes (text-based), component specs |
-| Engineer | `06-implementation-plan.md` | Task breakdown with TDD steps (code lives in repo) |
-| QA | `07-test-report.md` | Test plan, results, edge cases, sign-off |
-| Sales | `08-release-materials.md` | Customer-facing docs, talking points, FAQ |
+| QA/SDET | `06-test-plan.md` | Test plan, acceptance tests, test code |
+| Engineer | `07-implementation-plan.md` | Task breakdown, team assignment, implementation results |
 
 ## Pipeline Status Tracker
 
@@ -107,16 +107,14 @@ Pipeline: [Feature Name]
 ─────────────────────────
 [ ] Phase 1: Ideation
 [ ] Phase 2: Product Owner
-[ ] GATE: Spec Approval
 [ ] Phase 3: Compliance
 [ ] GATE: Compliance Pass
 [ ] Phase 4: Architecture
 [ ] Phase 5: UX Design
 [ ] GATE: Design Approval
-[ ] Phase 6: Engineering
-[ ] Phase 7: QA
-[ ] GATE: QA Sign-off
-[ ] Phase 8: Sales Enablement
+[ ] Phase 6: QA / SDET (Test Plan & Test Code)
+[ ] Phase 7: Engineering (Team Implementation)
+[ ] GATE: Verification (All Tests Pass)
 [ ] ✅ Feature Complete
 ```
 
@@ -131,9 +129,8 @@ Each agent gets ONLY what it needs. Don't dump the entire history.
 | Compliance | PO's feature spec |
 | Architect | PO's spec + Compliance conditions |
 | UX | PO's spec + Architect's design |
-| Engineer | PO's spec + Architect's design + UX spec |
-| QA | PO's acceptance criteria + Engineer's implementation |
-| Sales | PO's spec + UX flows + a summary of what was built |
+| QA/SDET | PO's spec + Architect's design + UX spec + Compliance conditions |
+| Engineer | PO's spec + Architect's design + UX spec + QA/SDET's test plan & test code |
 
 ## The Writer Agent
 
@@ -150,17 +147,19 @@ content:
 The Writer handles directory creation, file writing, and committing. It writes EXACTLY what it receives — no edits.
 
 **When to invoke the Writer:**
-- After every phase that produces a deliverable (all 8 phases)
+- After every phase that produces a deliverable (all 7 phases)
 - After a revision loop (agent re-ran after gate failure — Writer overwrites the previous file)
 - The Writer is the ONLY agent that writes to `docs/sdlc/`
 
 ## Dispatching Agents
 
-**For phases that benefit from isolation (Engineer, QA):** Use the `Task` tool to dispatch a subagent with the phase's skill and relevant context. This keeps the orchestrator's context clean. The subagent returns the deliverable as output — you then invoke the Writer to persist it.
-
 **For interactive phases (Ideator, PO, UX):** Run inline — these need back-and-forth with the user. Collect their final deliverable output, then invoke the Writer.
 
 **For assessment phases (Compliance):** Can run as subagent — takes spec in, produces assessment out. Pass the output to the Writer.
+
+**For QA/SDET:** Use the `Task` tool to dispatch as a subagent. QA/SDET receives the spec, architecture, UX, and compliance docs. It produces a test plan and writes test code. Return the deliverable, then invoke the Writer.
+
+**For Engineer (Team):** Use the `Task` tool to dispatch the lead Engineer as a subagent. The lead Engineer will itself spawn multiple engineer sub-agents in parallel (one per work domain/module) using the `Agent` tool. Each sub-agent implements its assigned portion and runs QA/SDET's tests for its area. The lead Engineer coordinates results, ensures integration, and returns the combined deliverable. Invoke the Writer to persist the implementation plan.
 
 ## Red Flags
 
@@ -169,7 +168,7 @@ The Writer handles directory creation, file writing, and committing. It writes E
 - Skip a gate ("the user seems fine with it")
 - Do the agent's work yourself instead of invoking the skill
 - Proceed after a FAIL compliance assessment
-- Let the Engineer start without an approved spec AND architecture
+- Let the Engineer start without an approved spec, architecture, AND QA test plan
 - Write deliverables to disk yourself — always use the Writer agent
 - Skip the Writer invocation after a phase completes
 
@@ -178,3 +177,4 @@ The Writer handles directory creation, file writing, and committing. It writes E
 - Invoke the Writer after every phase to persist deliverables to docs/sdlc/
 - Get EXPLICIT approval at gates (don't infer)
 - Pass only relevant context to each agent
+- Ensure the Engineer receives QA/SDET's test plan before starting implementation
