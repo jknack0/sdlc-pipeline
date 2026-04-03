@@ -24,8 +24,8 @@ digraph pipeline {
     gate_compliance [label="GATE: PASS or\nPASS_WITH_CONDITIONS" shape=diamond style=filled fillcolor="#ffcccc"];
     architect [label="4. ARCHITECT\nTechnical design & boundaries"];
     ux [label="5. UX DESIGNER\nUser flows & interaction design"];
-    gate_design [label="GATE: User approves\ndesign direction" shape=diamond style=filled fillcolor="#ffcccc"];
     qa [label="6. QA / SDET\nTest plan & test code"];
+    gate_design [label="GATE: User approves\ndesign direction" shape=diamond style=filled fillcolor="#ffcccc"];
     engineer [label="7. ENGINEER (Team)\nParallel TDD implementation"];
     gate_verify [label="GATE: All tests pass" shape=diamond style=filled fillcolor="#ffcccc"];
     done [label="✅ FEATURE COMPLETE" shape=doublecircle style=filled fillcolor="#ccffcc"];
@@ -36,10 +36,10 @@ digraph pipeline {
     gate_compliance -> architect [label="PASS"];
     gate_compliance -> po [label="FAIL\nrevise requirements" style=dashed];
     architect -> ux;
-    ux -> gate_design;
-    gate_design -> qa [label="approved"];
+    ux -> qa;
+    qa -> gate_design;
+    gate_design -> engineer [label="approved"];
     gate_design -> ux [label="revise" style=dashed];
-    qa -> engineer;
     engineer -> gate_verify;
     gate_verify -> done [label="all tests pass"];
     gate_verify -> engineer [label="failing tests" style=dashed];
@@ -65,7 +65,7 @@ Gates are mandatory. You CANNOT proceed without approval.
 | Gate | After | Condition | On Failure |
 |------|-------|-----------|------------|
 | **Compliance** | Compliance | Assessment is PASS or PASS_WITH_CONDITIONS | Return to PO to revise requirements |
-| **Design Approval** | UX | User approves the design direction | Revise with UX |
+| **Design Approval** | QA/SDET | User approves design direction & test plan | Revise with UX or QA |
 | **Verification** | Engineer | All QA/SDET tests pass, no critical/high issues | Return to Engineer to fix |
 
 **Gate protocol:**
@@ -111,8 +111,8 @@ Pipeline: [Feature Name]
 [ ] GATE: Compliance Pass
 [ ] Phase 4: Architecture
 [ ] Phase 5: UX Design
-[ ] GATE: Design Approval
 [ ] Phase 6: QA / SDET (Test Plan & Test Code)
+[ ] GATE: Design Approval
 [ ] Phase 7: Engineering (Team Implementation)
 [ ] GATE: Verification (All Tests Pass)
 [ ] ✅ Feature Complete
@@ -157,7 +157,7 @@ The Writer handles directory creation, file writing, and committing. It writes E
 
 **For assessment phases (Compliance):** Can run as subagent — takes spec in, produces assessment out. Pass the output to the Writer.
 
-**For QA/SDET:** Use the `Task` tool to dispatch as a subagent. QA/SDET receives the spec, architecture, UX, and compliance docs. It produces a test plan and writes test code. Return the deliverable, then invoke the Writer.
+**For QA/SDET:** Use the `Task` tool to dispatch as a subagent. QA/SDET receives the spec, architecture, UX, and compliance docs. It produces a test plan and writes test code. Return the deliverable, then invoke the Writer. QA/SDET runs BEFORE the Design Approval gate — the user reviews both design and test plan together before engineering begins.
 
 **For Engineer (Team):** Use the `Task` tool to dispatch the lead Engineer as a subagent. The lead Engineer will itself spawn multiple engineer sub-agents in parallel (one per work domain/module) using the `Agent` tool. Each sub-agent implements its assigned portion and runs QA/SDET's tests for its area. The lead Engineer coordinates results, ensures integration, and returns the combined deliverable. Invoke the Writer to persist the implementation plan.
 

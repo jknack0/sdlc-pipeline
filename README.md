@@ -31,11 +31,11 @@ A full software development lifecycle pipeline for Claude Code. Type `/feature` 
    │    UX    │  User flows, states, interactions
    └────┬─────┘
         ▼
-   ┌─ GATE ───┐  User approves design
-   └────┬─────┘
-        ▼
    ┌──────────┐
    │ QA/SDET  │  Test plan & test code (BEFORE implementation)
+   └────┬─────┘
+        ▼
+   ┌─ GATE ───┐  User approves design & test plan
    └────┬─────┘
         ▼
    ┌───────────────┐
@@ -84,7 +84,7 @@ Start a new Claude Code session. You should see the pipeline is available. Type 
 The orchestrator takes over and runs each phase. You'll be asked for input at gate checkpoints:
 
 1. **After Compliance** — Assessment must pass (automatic gate)
-2. **After UX** — You approve or revise the design
+2. **After QA/SDET** — You approve the design direction and test plan
 3. **After Engineering** — All QA/SDET tests must pass (automatic gate)
 
 ## How It Works

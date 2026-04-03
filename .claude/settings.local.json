@@ -5,6 +5,10 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)"
+    ],
+    "additionalDirectories": [
+      "c:\\Dev\\drfarts-marketplace\\.claude-plugin",
+      "c:\\Dev\\drfarts-marketplace"
     ]
   }
 }
