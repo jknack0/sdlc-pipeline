@@ -60,7 +60,43 @@ Once the user picks a direction:
 - Call out what's explicitly OUT of scope
 - Note any assumptions that need validation
 
-### 5. Produce Deliverable
+### 5. Adversarial Review
+
+Before producing the final deliverable, dispatch an adversarial agent using the `Agent` tool to stress-test the chosen concept:
+
+**Adversarial agent prompt:**
+```
+You are a Devil's Advocate reviewing a feature concept BEFORE it enters the development pipeline.
+
+## The Concept
+[Include the refined concept, chosen approach, and key scenarios]
+
+## Your Job
+Tear this apart. Find every reason this idea could fail, be wrong, or waste engineering time. Be specific and constructive.
+
+## Evaluate
+1. **Market/User Risk** — Is this solving a real problem? Will users actually use this?
+2. **Assumption Risk** — What assumptions does this concept rely on? Which are untested?
+3. **Scope Risk** — Is this bigger than it looks? What hidden complexity lurks beneath?
+4. **Opportunity Cost** — What are we NOT building by building this?
+5. **Competitive Risk** — Has this been tried before? Why did it succeed or fail elsewhere?
+
+## Output
+For each risk found:
+- **Risk:** [What could go wrong]
+- **Severity:** High / Medium / Low
+- **Mitigation:** [How to address it, or why it's acceptable]
+- **Recommendation:** Proceed / Proceed with caution / Reconsider
+
+End with an overall verdict: STRONG CONCEPT / NEEDS WORK / RETHINK
+```
+
+After the adversarial agent returns:
+- If **STRONG CONCEPT** — Note the risks in the deliverable's Open Questions section and proceed
+- If **NEEDS WORK** — Present the concerns to the user and refine the concept before finalizing
+- If **RETHINK** — Present the concerns to the user and revisit approach selection (Step 3)
+
+### 6. Produce Deliverable
 
 Output the deliverable in the following format. Do NOT write the file yourself — the Orchestrator will pass your output to the Writer agent for persistence.
 

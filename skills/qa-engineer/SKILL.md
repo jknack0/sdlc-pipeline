@@ -57,33 +57,63 @@ For each component/flow from UX spec:
 - [ ] Injection attacks: [If applicable] → `test file:test name`
 ```
 
-### 3. Write Test Code
+### 3. Dispatch Test-Writing Sub-Agents by Domain
 
-Write real, runnable test files. Follow the project's existing test framework and patterns.
+After producing the test plan, dispatch sub-agents in parallel to write test code for each domain. Use the `Agent` tool to launch all domain agents in a single message.
 
-**Test organization:**
-- Group tests by domain/module (aligned with architecture boundaries)
-- Each test file should be independently runnable
-- Use descriptive test names that map clearly to ACs and compliance conditions
-- Include setup/teardown for test fixtures
+**Sub-agent prompt template:**
+```
+You are a QA/SDET Engineer writing tests for Domain: [domain-name] of feature [feature-name].
 
-**Test quality requirements:**
-- Tests must FAIL when run against the current codebase (no implementation yet)
-- Tests must be deterministic (no flaky tests)
-- Tests must be independent (no ordering dependencies)
-- Tests must be fast (mock external services where appropriate)
-- Each test should verify ONE thing
+## Your Assignment
+Write executable test code for the [domain-name] domain.
 
-**What to test:**
-- Every acceptance criterion → at least one test
-- Every compliance condition → at least one test
-- Every UX flow (happy path, error, empty, edge cases) → tests for each state
-- Boundary values and invalid inputs
-- Security/adversarial scenarios from the compliance and architecture docs
+## Test Plan for Your Domain
+[Include the subset of the test plan relevant to this domain — ACs, compliance conditions, UX flows]
 
-### 4. Organize by Domain
+## Architecture Context
+[Include the architecture section for this domain — data model, APIs, components]
 
-Structure your tests to align with the architecture's module/domain boundaries. This enables the Engineer to assign each domain to a separate engineer sub-agent.
+## UX Context
+[Include UX flows relevant to this domain]
+
+## Compliance Conditions
+[Include compliance conditions that must be verified in this domain]
+
+## Rules
+1. Write REAL, RUNNABLE test files — not pseudocode
+2. Follow the project's existing test framework and patterns
+3. Tests must FAIL when run (no implementation exists yet)
+4. Tests must be deterministic — no flaky tests
+5. Tests must be independent — no ordering dependencies
+6. Each test verifies ONE thing
+7. Use descriptive test names that map to ACs, compliance conditions, or UX flows
+8. Include setup/teardown for test fixtures
+9. Mock external services where appropriate
+
+## Output
+Return the full contents of each test file for your domain:
+- File path: `tests/[domain-name]/[component].test.[ext]`
+- Full test code
+- Summary: number of tests, what they cover
+```
+
+**Dispatch rules:**
+- Identify domains from the architecture's module/component boundaries
+- Launch one sub-agent per domain in parallel
+- Each agent writes tests for its domain only
+- After all agents return, consolidate test files and verify complete coverage
+
+### 4. Consolidate & Verify Coverage
+
+After all domain sub-agents return:
+
+1. **Collect all test files** — Merge test code from each sub-agent
+2. **Verify AC coverage** — Every acceptance criterion has at least one test
+3. **Verify compliance coverage** — Every compliance condition has at least one test
+4. **Verify UX coverage** — Every flow and state has tests
+5. **Fill gaps** — Write any missing tests yourself for cross-domain or integration scenarios
+6. **Organize by domain** — Ensure test file structure aligns with architecture boundaries
 
 ```
 tests/
@@ -96,7 +126,66 @@ tests/
 
 Include a mapping in your deliverable showing which test files cover which domains.
 
-### 5. Produce Deliverable
+**Test quality requirements (enforced across all sub-agent output):**
+- Tests must FAIL when run against the current codebase (no implementation yet)
+- Tests must be deterministic (no flaky tests)
+- Tests must be independent (no ordering dependencies)
+- Tests must be fast (mock external services where appropriate)
+- Each test should verify ONE thing
+
+### 5. Adversarial Review
+
+After consolidating test code, dispatch an adversarial agent using the `Agent` tool to find blind spots in test coverage:
+
+**Adversarial agent prompt:**
+```
+You are a Test Plan Critic reviewing a QA/SDET test plan BEFORE it becomes the target for engineering.
+
+## The Test Plan & Test Code
+[Include the full consolidated test plan with domain mapping and test summaries]
+
+## The Feature Spec
+[Include 02-spec.md — requirements and acceptance criteria]
+
+## The Compliance Conditions
+[Include 03-compliance.md — conditions that must be verified]
+
+## The Architecture
+[Include 04-architecture.md — system design and data flows]
+
+## The UX Design
+[Include 05-ux-design.md — flows and states]
+
+## Your Job
+Find what the tests DON'T cover. Every gap in the test plan is a bug that will ship. Think like a penetration tester, a chaos engineer, and a frustrated user.
+
+## Attack Vectors
+1. **Missing Acceptance Criteria** — Any AC from the spec without a corresponding test?
+2. **Missing Compliance Verification** — Any compliance condition without a test?
+3. **Missing UX States** — Any component state (loading, error, empty, disabled) without a test?
+4. **Missing Negative Tests** — What SHOULDN'T work? Invalid inputs, unauthorized access, expired tokens
+5. **Missing Boundary Tests** — Max lengths, zero values, off-by-one, Unicode, empty strings
+6. **Missing Concurrency Tests** — Race conditions, double submits, parallel modifications
+7. **Missing Integration Gaps** — Cross-domain interactions that no single domain's tests cover
+8. **Flakiness Risk** — Tests that depend on timing, ordering, or external state
+
+## Output
+For each gap found:
+- **Gap:** [What's not tested]
+- **Category:** [AC / Compliance / UX / Negative / Boundary / Concurrency / Integration / Flaky]
+- **Severity:** Critical / Major / Minor
+- **What Could Ship:** [The bug that would reach production]
+- **Suggested Test:** [Brief description of the test to add]
+
+End with a summary: N critical, N major, N minor gaps found.
+```
+
+After the adversarial agent returns:
+- **Critical gaps** — Must add tests before finalizing. Write the missing tests.
+- **Major gaps** — Add tests for these; they represent real risk.
+- **Minor gaps** — Add if time allows; note in the test plan as known limitations.
+
+### 6. Produce Deliverable
 
 Output the deliverable in the following format. Do NOT write the file yourself — the Orchestrator will pass your output to the Writer agent for persistence.
 

@@ -79,7 +79,45 @@ Present the spec to the user in digestible chunks:
 
 **Ask after each section:** "Does this look right, or should I adjust anything?"
 
-### 5. Produce Deliverable
+### 5. Adversarial Review
+
+Before finalizing, dispatch an adversarial agent using the `Agent` tool to find gaps in the spec:
+
+**Adversarial agent prompt:**
+```
+You are a Spec Critic reviewing a feature specification BEFORE it enters compliance and design.
+
+## The Spec
+[Include the full draft spec with all requirements and acceptance criteria]
+
+## Your Job
+Find every gap, ambiguity, missing edge case, and untestable requirement. Be thorough and specific.
+
+## Evaluate
+1. **Ambiguity** — Which requirements could be interpreted multiple ways?
+2. **Missing Edge Cases** — What error conditions, boundary values, or unusual states are unspecified?
+3. **Untestable Criteria** — Which acceptance criteria can't be objectively verified?
+4. **Conflicting Requirements** — Do any requirements contradict each other?
+5. **Scope Gaps** — What's not explicitly in-scope or out-of-scope? (Ambiguous scope = scope creep)
+6. **Missing Non-Functionals** — Are performance, security, accessibility, and data retention addressed?
+7. **Implicit Assumptions** — What does this spec assume that isn't stated?
+
+## Output
+For each issue found:
+- **Issue:** [What's wrong or missing]
+- **Location:** [Which requirement/AC]
+- **Severity:** Critical / Major / Minor
+- **Suggestion:** [How to fix it]
+
+End with a summary: N critical, N major, N minor issues found.
+```
+
+After the adversarial agent returns:
+- **Critical issues** — Must be fixed before finalizing. Update the spec and re-present to the user.
+- **Major issues** — Present to the user for decision: fix now or accept the risk.
+- **Minor issues** — Incorporate fixes silently into the final deliverable.
+
+### 6. Produce Deliverable
 
 After full approval, output the deliverable in the following format. Do NOT write the file yourself — the Orchestrator will pass your output to the Writer agent for persistence.
 

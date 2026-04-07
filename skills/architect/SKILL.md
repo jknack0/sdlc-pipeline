@@ -31,9 +31,53 @@ Before designing anything:
 - Find integration points
 - Note technical constraints or debt that affects this feature
 
-### 3. Design the Architecture
+### 3. Design the Architecture Using Sub-Agents
 
-Cover each of these areas:
+Break the architecture into concern areas and dispatch sub-agents in parallel using the `Agent` tool. Launch all agents in a single message.
+
+**Sub-agent prompt template:**
+```
+You are an Architect specializing in [CONCERN AREA] for feature [feature-name].
+
+## Your Assignment
+Design the [concern area] for this feature.
+
+## Feature Spec
+[Include relevant sections of 02-spec.md]
+
+## Compliance Conditions
+[Include relevant conditions from 03-compliance.md]
+
+## Existing Codebase Context
+[Include findings from codebase exploration relevant to this concern]
+
+## Output
+Produce a detailed design for your concern area following the format below.
+```
+
+**Dispatch these concern agents:**
+
+| Agent | Responsibility | Output |
+|-------|---------------|--------|
+| **Data Model Agent** | Entities, relationships, storage strategy, retention/erasure | Data model section with field-level detail |
+| **API Design Agent** | Endpoints, request/response shapes, auth model, error format | API design section with full contracts |
+| **Infrastructure Agent** | System boundaries, components, integration points, tech choices | System diagram, component descriptions, technology table |
+
+**Dispatch rules:**
+- Launch all three agents in parallel using multiple `Agent` tool calls in a single message
+- Each agent receives the spec, compliance conditions, and codebase exploration findings
+- After all agents return, consolidate their outputs into the unified architecture deliverable
+
+### 4. Consolidate Architecture
+
+After all sub-agents return, merge their outputs and ensure consistency:
+
+- Verify API design aligns with the data model (field names, types)
+- Verify infrastructure components support the API and data model requirements
+- Map each compliance condition to a specific architectural element across all concern areas
+- Resolve any conflicts between sub-agent outputs (favor compliance requirements)
+
+The consolidated architecture must cover each of these areas:
 
 **System Boundaries:**
 - What components are involved (new and existing)?
@@ -66,7 +110,49 @@ Cover each of these areas:
 - Why these over alternatives?
 - Any new dependencies?
 
-### 4. Document Trade-offs
+### 5. Adversarial Review
+
+After consolidating the architecture, dispatch an adversarial agent using the `Agent` tool to attack the design:
+
+**Adversarial agent prompt:**
+```
+You are an Architecture Attacker reviewing a technical design BEFORE it moves to UX and implementation.
+
+## The Architecture
+[Include the full consolidated architecture deliverable]
+
+## The Compliance Conditions
+[Include conditions from 03-compliance.md that must be satisfied]
+
+## Your Job
+Find every way this architecture could fail, be exploited, or collapse under real-world conditions. Think like a malicious user, a load tester, and a chaos engineer.
+
+## Attack Vectors
+1. **Security** — Injection points, auth bypass, privilege escalation, data exposure in error responses or logs
+2. **Scalability** — What breaks at 10x, 100x, 1000x load? Bottlenecks, hot spots, unbounded queries
+3. **Failure Modes** — Single points of failure, cascading failures, what happens when dependencies are down?
+4. **Data Integrity** — Race conditions, partial writes, inconsistent state across services, lost updates
+5. **Compliance Gaps** — Are all compliance conditions actually addressed by architectural elements?
+6. **API Abuse** — Rate limiting gaps, missing input validation, oversized payloads, enumeration attacks
+7. **Operational Risk** — Observability gaps, missing health checks, deployment risks, rollback difficulty
+
+## Output
+For each vulnerability found:
+- **Vulnerability:** [What's wrong]
+- **Category:** [Security / Scalability / Failure / Data / Compliance / API / Ops]
+- **Severity:** Critical / Major / Minor
+- **Attack Scenario:** [How this gets exploited or triggered]
+- **Recommended Fix:** [Specific architectural change]
+
+End with a summary: N critical, N major, N minor vulnerabilities found.
+```
+
+After the adversarial agent returns:
+- **Critical vulnerabilities** — Must be fixed in the architecture before proceeding. Update the design.
+- **Major vulnerabilities** — Fix if straightforward; otherwise document in Risks & Mitigations with a plan.
+- **Minor vulnerabilities** — Document in Risks & Mitigations.
+
+### 6. Document Trade-offs
 
 For significant decisions, document:
 - What you chose and why

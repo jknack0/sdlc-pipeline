@@ -17,14 +17,12 @@ A full software development lifecycle pipeline for Claude Code. Type `/feature` 
    └────┬─────┘
         ▼
    ┌────────────┐
-   │ COMPLIANCE │  GDPR / HIPAA / SOC2 assessment
+   │ COMPLIANCE │  GDPR / HIPAA / SOC2 (parallel sub-agents)
    └────┬───────┘
-        ▼
-   ┌─ GATE ───┐  Must PASS to proceed
-   └────┬─────┘
+        │ auto-check: PASS → continue, FAIL → back to PO
         ▼
    ┌───────────┐
-   │ ARCHITECT │  System design, data flow, API boundaries
+   │ ARCHITECT │  System design (parallel sub-agents)
    └────┬──────┘
         ▼
    ┌──────────┐
@@ -32,18 +30,16 @@ A full software development lifecycle pipeline for Claude Code. Type `/feature` 
    └────┬─────┘
         ▼
    ┌──────────┐
-   │ QA/SDET  │  Test plan & test code (BEFORE implementation)
+   │ QA/SDET  │  Test plan & test code (parallel sub-agents)
    └────┬─────┘
         ▼
-   ┌─ GATE ───┐  User approves design & test plan
+   ┌─ GATE ───┐  User reviews design, UX & test plan
    └────┬─────┘
         ▼
    ┌───────────────┐
    │ ENGINEER TEAM │  Parallel TDD implementation
    └──────┬────────┘
-        ▼
-   ┌─ GATE ───┐  All QA tests pass
-   └────┬─────┘
+        │ auto-verify: tests pass → done, fail → retry
         ▼
     ✅ DONE
 ```
@@ -81,19 +77,20 @@ Start a new Claude Code session. You should see the pipeline is available. Type 
 /feature I want to add user authentication with OAuth2 and email/password
 ```
 
-The orchestrator takes over and runs each phase. You'll be asked for input at gate checkpoints:
+The orchestrator takes over and runs each phase autonomously. Each phase includes an adversarial agent that stress-tests the output before moving on. You only need to approve once:
 
-1. **After Compliance** — Assessment must pass (automatic gate)
-2. **After QA/SDET** — You approve the design direction and test plan
-3. **After Engineering** — All QA/SDET tests must pass (automatic gate)
+- **After QA/SDET** — The pipeline pauses to show you the architecture, UX design, and test plan. This is where you see what the feature will look like and approve or request changes.
+
+Everything else is automatic — compliance failures loop back to the PO, and test failures loop back to the Engineer without needing your input.
 
 ## How It Works
 
-The pipeline uses a **test-first** approach:
+The pipeline uses **test-first development**, **parallel sub-agents**, and **adversarial review**:
 
-- **QA/SDET writes tests before implementation** — executable test code organized by domain, covering every acceptance criterion, compliance condition, and UX flow
-- **Engineer dispatches a team** — the Lead Engineer breaks work into domains and spawns multiple engineer sub-agents in parallel, each implementing their domain to pass QA's pre-written tests
-- **Verification is automatic** — the full test suite must pass before the feature is marked complete
+- **Parallel sub-agents** — Compliance runs GDPR/SOC2/HIPAA assessors in parallel. Architect splits across data model, API, and infrastructure concerns. QA/SDET writes tests per domain in parallel. Engineer dispatches implementation agents per domain.
+- **Adversarial agents at every step** — Each phase (except Engineer) includes an adversarial agent that attacks the output: a devil's advocate for ideas, a spec critic for requirements, a red-teamer for compliance, an architecture attacker, a UX critic, and a test plan critic.
+- **Test-first** — QA/SDET writes executable tests before implementation. The Engineer's job is to make them pass.
+- **One approval point** — You review everything (architecture + UX + tests) at a single gate after QA/SDET. Compliance and verification are automatic.
 
 ## What Gets Produced
 

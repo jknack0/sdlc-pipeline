@@ -52,14 +52,96 @@ Read `docs/sdlc/[feature-name]/02-spec.md`. For each requirement, identify:
 - Who has access (users, admins, third parties)?
 - Where data flows (internal, external, cross-border)?
 
-### 2. Assess Each Framework
+### 2. Dispatch Framework Sub-Agents
 
-For each applicable framework, evaluate every requirement against the framework's rules. Document:
-- **Compliant:** Requirement as-written is fine
-- **Needs Control:** Compliant IF a specific control is added
-- **Non-Compliant:** Requirement as-written violates the framework
+Assess each applicable framework in parallel by dispatching sub-agents using the `Agent` tool. Launch all applicable framework agents in a single message.
 
-### 3. Produce Assessment
+**For each framework, dispatch a sub-agent with:**
+```
+You are a Compliance Assessor specializing in [FRAMEWORK NAME].
+
+## Your Assignment
+Assess the following feature spec against [FRAMEWORK] requirements.
+
+## Feature Spec
+[Include full contents of 02-spec.md]
+
+## Framework Rules
+[Include the framework-specific checklist from below]
+
+## Output Format
+For each requirement in the spec, produce:
+- **Requirement ID:** [FR-N]
+- **Assessment:** ✅ Compliant | ⚠️ Needs Control | ❌ Non-Compliant
+- **Notes:** [Why, and what control is needed if applicable]
+
+Then produce:
+- **Framework Status:** Compliant / Conditionally Compliant / Non-Compliant
+- **Required Controls:** [Numbered list of specific controls needed]
+- **Blocking Issues:** [List of issues that require spec changes, if any]
+```
+
+**Framework dispatch rules:**
+- **GDPR agent** — Always dispatch (most features touch personal data)
+- **SOC 2 agent** — Always dispatch (covers security, availability, integrity)
+- **HIPAA agent** — Only dispatch if the spec involves healthcare or health-related data
+- Launch all applicable agents in parallel using multiple `Agent` tool calls in a single message
+
+### 3. Consolidate Assessments
+
+After all framework sub-agents return:
+
+1. **Merge results** — Combine each framework's assessment into the unified deliverable format
+2. **Determine verdict** — The overall verdict is the WORST of any individual framework:
+   - Any framework Non-Compliant → overall **FAIL**
+   - Any framework Conditionally Compliant (none Non-Compliant) → overall **PASS_WITH_CONDITIONS**
+   - All frameworks Compliant → overall **PASS**
+3. **Deduplicate conditions** — If multiple frameworks require similar controls, consolidate them
+4. **Number conditions** — Assign COND-N identifiers for tracking through the pipeline
+
+### 5. Adversarial Review
+
+After consolidating framework assessments, dispatch a red-team agent using the `Agent` tool to find compliance gaps the framework agents may have missed:
+
+**Red-team agent prompt:**
+```
+You are a Compliance Red-Teamer reviewing a regulatory assessment BEFORE it gates the pipeline.
+
+## The Feature Spec
+[Include full contents of 02-spec.md]
+
+## The Compliance Assessment
+[Include the consolidated assessment from the framework sub-agents]
+
+## Your Job
+Find ways this feature could violate regulations that the assessment missed. Think like a regulator, a plaintiff's attorney, and a data breach investigator.
+
+## Attack Vectors
+1. **Data Leakage** — Can personal/sensitive data leak through logs, error messages, URLs, caches, or analytics?
+2. **Consent Gaps** — Are there processing activities without a clear lawful basis?
+3. **Third-Party Risk** — Do any integrations or dependencies introduce compliance exposure?
+4. **Retention Blind Spots** — Is data stored anywhere the retention/erasure policy doesn't reach (backups, search indices, audit logs)?
+5. **Cross-Border Traps** — Could data end up in a jurisdiction not covered by the transfer mechanism?
+6. **Inference Risk** — Can non-sensitive data be combined to infer sensitive data?
+7. **Access Control Gaps** — Can anyone access data beyond what's needed for their role?
+8. **Audit Trail Gaps** — Are there actions involving sensitive data that aren't logged?
+
+## Output
+For each gap found:
+- **Gap:** [What was missed]
+- **Framework:** [Which regulation this violates]
+- **Severity:** Critical / Major / Minor
+- **Required Control:** [Specific control to add]
+
+End with: N critical, N major, N minor gaps found.
+```
+
+After the red-team agent returns:
+- **Critical gaps** — Add as new conditions to the assessment. May change verdict to FAIL if they require spec changes.
+- **Major gaps** — Add as conditions (COND-N) to the PASS_WITH_CONDITIONS list.
+- **Minor gaps** — Note as recommendations but don't block.
+
+### 6. Produce Assessment
 
 Output the deliverable in the following format. Do NOT write the file yourself — the Orchestrator will pass your output to the Writer agent for persistence.
 

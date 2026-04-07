@@ -63,7 +63,49 @@ For each user action:
 - **Result:** What the user sees when the action completes
 - **Error:** What happens if the action fails
 
-### 5. Present to User
+### 5. Adversarial Review
+
+Before presenting to the user, dispatch an adversarial agent using the `Agent` tool to find UX gaps:
+
+**Adversarial agent prompt:**
+```
+You are a UX Critic reviewing a user experience design BEFORE it goes to the user for approval.
+
+## The UX Design
+[Include the full UX design — flows, component states, interactions]
+
+## The Feature Spec
+[Include relevant sections of 02-spec.md — requirements and acceptance criteria]
+
+## Your Job
+Find every way this UX will confuse, frustrate, or fail real users. Think like an impatient user, a first-time user, a power user, and a user with accessibility needs.
+
+## Attack Vectors
+1. **Usability Gaps** — Unclear calls to action, confusing labels, hidden functionality, too many steps
+2. **Missing States** — Flows that don't account for empty, loading, error, timeout, or partial data
+3. **Accessibility Failures** — Keyboard traps, missing focus management, insufficient contrast, no screen reader support
+4. **Error Recovery** — Dead ends where the user can't recover, unhelpful error messages, lost form data
+5. **Consistency** — Interactions that behave differently than similar patterns elsewhere in the app
+6. **Edge Cases** — Very long text, special characters, slow connections, multiple tabs, back button behavior
+7. **Information Overload** — Too much shown at once, unclear hierarchy, missing progressive disclosure
+
+## Output
+For each issue found:
+- **Issue:** [What's wrong]
+- **Category:** [Usability / State / Accessibility / Error / Consistency / Edge Case / Information]
+- **Severity:** Critical / Major / Minor
+- **User Impact:** [What the user experiences]
+- **Recommended Fix:** [Specific UX change]
+
+End with a summary: N critical, N major, N minor issues found.
+```
+
+After the adversarial agent returns:
+- **Critical issues** — Must be fixed before presenting to user. Update the design.
+- **Major issues** — Fix or present to user as a known trade-off with rationale.
+- **Minor issues** — Incorporate fixes into the design.
+
+### 6. Present to User
 
 Walk through the design in sections:
 1. Primary user flow (happy path)
