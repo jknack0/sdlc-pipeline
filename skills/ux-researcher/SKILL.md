@@ -242,12 +242,28 @@ Do NOT pre-filter by what you think is "highest leverage." Surface every finding
 
 After tagging, also produce a **primary suggestion**: the single phase you'd pick if forced to choose one. This is advisory only — the user can ignore it. It exists to help users who don't want to read the full report make a fast call.
 
-### 8. Adversarial Review
+### 8. Debate Loop with UX Research Critic
 
-Before finalizing, dispatch a **UX Research Critic** agent using the `Agent` tool:
+Run the debate loop per `docs/debate-protocol.md`. Summary:
 
+- Dispatch a UX Research Critic adversarial via the `Agent` tool with the current draft report
+- Receive Critical / Major / Minor findings
+- Revise: fix Critical findings, fix or document Major findings, log Minor findings
+- Re-dispatch on the revised report
+- **Stop when:** 0 Critical AND 0 Major findings, OR 3 rounds completed
+
+**UX Research Critic adversarial prompt:**
 ```
-You are reviewing a UX research report before it is delivered to the user. The report is below. Find issues with:
+You are a UX Research Critic reviewing a research report BEFORE it is delivered to the user. This is round [N] of up to 3.
+
+## The Report (current draft)
+[full draft report]
+
+## Prior rounds (if any)
+[Brief summary of what changed between previous draft and this one]
+
+## Your Job
+Find issues with the report. Do NOT repeat findings already addressed in prior rounds. Focus on:
 
 1. **Moderator guide quality** — Are the goals specific? Are the hypotheses falsifiable? Are the tasks phrased in user language (not jargon)? Are success criteria and hard stops concrete enough that two participants would agree on whether the task was completed?
 2. **Persona bias** — Are the personas actually different, or did they all behave the same? Is the older/tech-averse weighting actually reflected in their behavior?
@@ -257,16 +273,14 @@ You are reviewing a UX research report before it is delivered to the user. The r
 6. **Missing observations** — Did the researcher ignore signals (e.g., 4 participants confused by the same word) in favor of a tidier narrative?
 7. **Primary suggestion sanity** — Is the researcher's primary suggestion actually defensible, or is it the comfortable choice?
 
-For each issue, return:
-- **Issue:**
+## Output
+For each finding:
+- **Finding:**
 - **Severity:** Critical / Major / Minor
-- **Fix:** [specific change to the report]
+- **Recommended fix:** [specific change to the report]
 
-Report being reviewed:
-[full draft report]
+End with: N critical, N major, N minor findings.
 ```
-
-Apply Critical and Major fixes before producing the final deliverable.
 
 ### 9. Produce Deliverable
 
@@ -332,20 +346,47 @@ Each finding is tagged with the phase(s) that could fix it. The user picks which
 
 ## Iteration History
 [If this is iteration 2+, briefly note what changed since the last iteration and whether the score moved in the right direction. If iteration 1, write "First iteration — no prior baseline."]
+
+## Decision Log
+*Required appendix per `docs/debate-protocol.md`. The user reads this AT the Research Review gate alongside the score and findings.*
+
+### Decisions Made
+| Decision | We chose | Why | Research Critic pushback |
+|----------|----------|-----|--------------------------|
+
+### Alternatives Considered
+- **[Alternative scoring weight / persona / task framing]** — rejected because [reason]
+
+### Debate Summary
+- **Rounds:** [N of 3]
+- **Final Research Critic verdict:** [N critical, N major, N minor]
+- **Resolved this round:** [what changed in the final round]
+- **Open issues:** [unresolved findings, or "none"]
+
+### For Your Review
+*Note: this section is in addition to the orchestrator's Research Review gate. Use it to surface issues the orchestrator's standard ship/loop/abort flow doesn't cover — e.g., "the persona weighting felt off this iteration, consider adjusting before iter N+1."*
+
+1. **[Question]** — [why this needs human judgment]
+
+*If nothing needs the user's input beyond the standard gate decision, write "Nothing — proceeding to gate."*
 ```
 
-Hand the deliverable back to the Orchestrator along with the iteration number.
+Hand the deliverable back to the Orchestrator along with the iteration number and a one-line debate summary (e.g. `Debate: 2 rounds, converged (0 critical, 0 major, 1 minor logged)`).
 
 ## Key Principles
 
+- **The debate loop is the validation** — the Research Critic stress-tests the report, not the user
 - **Test the running app, not the docs.** If you find yourself reading source code to evaluate UX, stop — that's not what this phase is for.
 - **Older personas are the canary.** If they all completed easily, your test was too easy or your personas weren't in character.
 - **Blocked at entry = critical.** A feature that can't be reached is the failure mode this phase exists to catch.
 - **Tag honestly, don't pre-filter.** Surface every clustered finding with accurate phase tags. The user decides which to act on — your job is to give them clean signal, not narrow choices.
 - **The score is directional.** A human is going to look at this and decide. Don't oversell precision.
+- **Decision Log is non-negotiable** — Every report ends with the Decision Log appendix
 
 ## Red Flags
 
+- Skipping the debate loop or running it less than once
+- Producing a report without a Decision Log
 - All 5 participants completed the task easily → personas were too generous, or the test goal was too narrow
 - Score above 90 on iteration 1 → suspicious; either the feature is unusually solid or the scoring was soft
 - Tagging every finding with every phase → lazy; means you didn't actually classify the cause

@@ -99,22 +99,31 @@ After all framework sub-agents return:
 3. **Deduplicate conditions** — If multiple frameworks require similar controls, consolidate them
 4. **Number conditions** — Assign COND-N identifiers for tracking through the pipeline
 
-### 5. Adversarial Review
+### 5. Debate Loop with Compliance Red-Teamer
 
-After consolidating framework assessments, dispatch a red-team agent using the `Agent` tool to find compliance gaps the framework agents may have missed:
+Run the debate loop per `docs/debate-protocol.md`. Summary:
 
-**Red-team agent prompt:**
+- Dispatch a Compliance Red-Teamer adversarial via the `Agent` tool with the current consolidated assessment
+- Receive Critical / Major / Minor findings (categorized as compliance gaps)
+- Revise the assessment: add Critical findings as new conditions (may change verdict to FAIL), add Major findings as PASS_WITH_CONDITIONS items, log Minor findings as recommendations
+- Re-dispatch on the revised assessment
+- **Stop when:** 0 Critical AND 0 Major findings, OR 3 rounds completed
+
+**Red-team adversarial prompt:**
 ```
-You are a Compliance Red-Teamer reviewing a regulatory assessment BEFORE it gates the pipeline.
+You are a Compliance Red-Teamer reviewing a regulatory assessment BEFORE it gates the pipeline. This is round [N] of up to 3.
 
 ## The Feature Spec
 [Include full contents of 02-spec.md]
 
-## The Compliance Assessment
+## The Compliance Assessment (current draft)
 [Include the consolidated assessment from the framework sub-agents]
 
+## Prior rounds (if any)
+[Brief summary of what changed between previous draft and this one]
+
 ## Your Job
-Find ways this feature could violate regulations that the assessment missed. Think like a regulator, a plaintiff's attorney, and a data breach investigator.
+Find ways this feature could violate regulations that the assessment missed. Think like a regulator, a plaintiff's attorney, and a data breach investigator. Do NOT repeat findings already addressed in prior rounds.
 
 ## Attack Vectors
 1. **Data Leakage** — Can personal/sensitive data leak through logs, error messages, URLs, caches, or analytics?
@@ -127,19 +136,14 @@ Find ways this feature could violate regulations that the assessment missed. Thi
 8. **Audit Trail Gaps** — Are there actions involving sensitive data that aren't logged?
 
 ## Output
-For each gap found:
-- **Gap:** [What was missed]
+For each finding:
+- **Finding:** [What was missed]
 - **Framework:** [Which regulation this violates]
 - **Severity:** Critical / Major / Minor
 - **Required Control:** [Specific control to add]
 
-End with: N critical, N major, N minor gaps found.
+End with: N critical, N major, N minor findings.
 ```
-
-After the red-team agent returns:
-- **Critical gaps** — Add as new conditions to the assessment. May change verdict to FAIL if they require spec changes.
-- **Major gaps** — Add as conditions (COND-N) to the PASS_WITH_CONDITIONS list.
-- **Minor gaps** — Note as recommendations but don't block.
 
 ### 6. Produce Assessment
 
@@ -199,9 +203,32 @@ IF verdict is FAIL, list every blocking issue:
 2. **[BLOCK-2]:** [What's wrong] — [What the spec must change]
 
 The spec MUST be revised by the PO and re-assessed before proceeding.
+
+## Decision Log
+*Required appendix per `docs/debate-protocol.md`. This documents the debate between the framework agents, the consolidated assessment, and the red-teamer.*
+
+### Decisions Made
+| Decision | We chose | Why | Red-teamer pushback |
+|----------|----------|-----|---------------------|
+
+### Alternatives Considered
+- **[Alternative interpretation/control]** — rejected because [reason]
+
+### Debate Summary
+- **Rounds:** [N of 3]
+- **Final red-team verdict:** [N critical, N major, N minor]
+- **Resolved this round:** [what changed in the final round]
+- **Open issues:** [unresolved findings, or "none"]
+
+### For Your Review
+*Compliance is normally a machine-to-machine gate (PASS/FAIL auto-loops to PO), so this section is usually empty. Only surface items here when there is a genuine policy judgment call the user needs to make — e.g., "we can implement Control X strictly or pragmatically; strict adds 2 weeks of work."*
+
+1. **[Question]** — [why this needs human judgment]
+
+*If nothing needs the user's input, write "Nothing — proceeding."*
 ```
 
-Hand off the deliverable content to the Orchestrator.
+Hand off the deliverable content to the Orchestrator along with a one-line debate summary (e.g. `Debate: 2 rounds, converged (0 critical, 0 major, 1 minor logged)`).
 
 ## Verdict Rules
 
@@ -213,11 +240,13 @@ Hand off the deliverable content to the Orchestrator.
 
 ## Key Principles
 
+- **The debate loop is the validation** — the Red-Teamer stress-tests the assessment, not the user
 - **Conservative by default** — When in doubt, flag it
 - **Specific, not vague** — "Add encryption" is not a condition. "Encrypt PII at rest using AES-256 and in transit using TLS 1.2+" is.
 - **Requirements, not architecture** — You assess the WHAT, not the HOW. Don't design solutions.
 - **No shortcuts** — "We'll handle compliance later" is not acceptable
 - **Proportional** — A feature that doesn't touch personal data doesn't need a DPIA
+- **Decision Log is non-negotiable** — Every assessment ends with the Decision Log appendix
 
 ## Red Flags
 
@@ -226,3 +255,5 @@ Hand off the deliverable content to the Orchestrator.
 - Suggesting architecture changes instead of flagging requirement issues
 - Assuming a framework doesn't apply without checking
 - Issuing PASS because the feature "seems simple"
+- Skipping the debate loop or running it less than once
+- Producing an assessment without a Decision Log

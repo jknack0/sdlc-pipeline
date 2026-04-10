@@ -133,15 +133,21 @@ Include a mapping in your deliverable showing which test files cover which domai
 - Tests must be fast (mock external services where appropriate)
 - Each test should verify ONE thing
 
-### 5. Adversarial Review
+### 5. Debate Loop with Test Plan Critic
 
-After consolidating test code, dispatch an adversarial agent using the `Agent` tool to find blind spots in test coverage:
+Run the debate loop per `docs/debate-protocol.md`. Summary:
 
-**Adversarial agent prompt:**
+- Dispatch a Test Plan Critic adversarial via the `Agent` tool with the current consolidated test plan + test code
+- Receive Critical / Major / Minor findings (gaps in coverage)
+- Revise: write tests for Critical and Major gaps, log Minor gaps as known limitations
+- Re-dispatch on the revised plan
+- **Stop when:** 0 Critical AND 0 Major findings, OR 3 rounds completed
+
+**Test Plan Critic adversarial prompt:**
 ```
-You are a Test Plan Critic reviewing a QA/SDET test plan BEFORE it becomes the target for engineering.
+You are a Test Plan Critic reviewing a QA/SDET test plan BEFORE it becomes the target for engineering. This is round [N] of up to 3.
 
-## The Test Plan & Test Code
+## The Test Plan & Test Code (current draft)
 [Include the full consolidated test plan with domain mapping and test summaries]
 
 ## The Feature Spec
@@ -156,8 +162,11 @@ You are a Test Plan Critic reviewing a QA/SDET test plan BEFORE it becomes the t
 ## The UX Design
 [Include 05-ux-design.md — flows and states]
 
+## Prior rounds (if any)
+[Brief summary of what changed between previous draft and this one]
+
 ## Your Job
-Find what the tests DON'T cover. Every gap in the test plan is a bug that will ship. Think like a penetration tester, a chaos engineer, and a frustrated user.
+Find what the tests DON'T cover. Every gap in the test plan is a bug that will ship. Think like a penetration tester, a chaos engineer, and a frustrated user. Do NOT repeat findings already addressed in prior rounds.
 
 ## Attack Vectors
 1. **Missing Acceptance Criteria** — Any AC from the spec without a corresponding test?
@@ -170,20 +179,15 @@ Find what the tests DON'T cover. Every gap in the test plan is a bug that will s
 8. **Flakiness Risk** — Tests that depend on timing, ordering, or external state
 
 ## Output
-For each gap found:
-- **Gap:** [What's not tested]
+For each finding:
+- **Finding:** [What's not tested]
 - **Category:** [AC / Compliance / UX / Negative / Boundary / Concurrency / Integration / Flaky]
 - **Severity:** Critical / Major / Minor
 - **What Could Ship:** [The bug that would reach production]
 - **Suggested Test:** [Brief description of the test to add]
 
-End with a summary: N critical, N major, N minor gaps found.
+End with: N critical, N major, N minor findings.
 ```
-
-After the adversarial agent returns:
-- **Critical gaps** — Must add tests before finalizing. Write the missing tests.
-- **Major gaps** — Add tests for these; they represent real risk.
-- **Minor gaps** — Add if time allows; note in the test plan as known limitations.
 
 ### 6. Produce Deliverable
 
@@ -233,21 +237,46 @@ Output the deliverable in the following format. Do NOT write the file yourself �
 - Compliance coverage: [N/N]
 - UX flow coverage: [N/N]
 - Adversarial tests: [N]
+
+## Decision Log
+*Required appendix per `docs/debate-protocol.md`. The user reads this to understand what was decided, what was considered, and what genuinely needs their input.*
+
+### Decisions Made
+| Decision | We chose | Why | Test Critic pushback |
+|----------|----------|-----|----------------------|
+
+### Alternatives Considered
+- **[Alternative test approach/framework]** — rejected because [reason]
+
+### Debate Summary
+- **Rounds:** [N of 3]
+- **Final Test Critic verdict:** [N critical, N major, N minor]
+- **Resolved this round:** [what changed in the final round]
+- **Open issues:** [unresolved findings, or "none"]
+
+### For Your Review
+1. **[Question]** — [why this needs human judgment, e.g. "skip flaky integration tests for the third-party API or invest in a stable harness?"]
+
+*If nothing needs the user's input, write "Nothing — proceeding."*
 ```
 
-Hand off the deliverable content to the Orchestrator. The Engineer will use your test plan and test code as the target for implementation.
+Hand off the deliverable content to the Orchestrator along with a one-line debate summary (e.g. `Debate: 2 rounds, converged (0 critical, 0 major, 1 minor logged)`). The Engineer will use your test plan and test code as the target for implementation.
 
 ## Key Principles
 
+- **The debate loop is the validation** — the Test Plan Critic stress-tests coverage, not the user
 - **Tests define done** — If there's no test for it, the Engineer won't build it. Be comprehensive.
 - **Executable, not theoretical** — A test plan without code is a wish list. Write real tests.
 - **Aligned to architecture** — Organize tests by domain so they can be parallelized across engineer sub-agents.
 - **Adversarial mindset** — Think like a malicious user. Test what SHOULDN'T work, not just what should.
 - **Compliance is testable** — Every compliance condition can be verified with a test. Find a way.
 - **Trace to spec** — Every AC maps to a test. Every test maps to an AC, compliance condition, or UX flow.
+- **Decision Log is non-negotiable** — Every deliverable ends with the Decision Log appendix
 
 ## Red Flags
 
+- Skipping the debate loop or running it less than once
+- Producing a test plan without a Decision Log
 - Writing a test plan without executable test code
 - Missing tests for any acceptance criterion
 - Missing tests for any compliance condition

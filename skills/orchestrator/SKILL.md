@@ -55,11 +55,18 @@ For each phase:
 1. **Announce:** `## Phase N: [Agent Name]`
 2. **Invoke:** Use the `Skill` tool to load `sdlc-pipeline:[skill-name]`
 3. **Execute:** Follow that skill's process exactly — dispatch subagents where the skill says to (including adversarial agents)
-4. **Collect output:** Each agent produces a deliverable as output (they do NOT write files)
-5. **Persist:** Invoke the `sdlc-pipeline:writer` skill to write the deliverable to disk (see Writer below)
-6. **Handoff:** Pass the deliverable as context to the next phase
+4. **Collect output:** Each agent produces a converged deliverable as output (they do NOT write files). The deliverable includes a **Decision Log** appendix per `docs/debate-protocol.md`.
+5. **Log debate summary:** Each agent returns a one-line debate summary alongside the deliverable (e.g. `Debate: 2 rounds, converged (0 critical, 0 major, 1 minor logged)`). Print this in your phase output.
+6. **Persist:** Invoke the `sdlc-pipeline:writer` skill to write the deliverable to disk (see Writer below)
+7. **Handoff:** Pass the deliverable as context to the next phase
 
 The pipeline runs **straight through** from Ideator to UX Researcher with no stops. The only place the pipeline waits for the user is the **Research Review gate** after each UX Research iteration.
+
+### Convergence model
+
+Each phase agent (except Engineer) converges internally with its adversarial counterpart via the **debate loop** defined in `docs/debate-protocol.md`. The agent dispatches the adversarial, addresses findings, and re-dispatches until either (a) 0 Critical AND 0 Major findings remain, or (b) the 3-round cap is hit. The orchestrator does NOT stop to ask the user mid-phase — agents own their own convergence.
+
+If a phase hits the 3-round cap with unresolved Critical or Major findings, the agent surfaces them in the Decision Log's "For Your Review" section. The orchestrator should print these prominently at the phase boundary so the user sees them when they hit the next user gate (Research Review).
 
 ## Compliance Auto-Check
 
@@ -253,6 +260,7 @@ The Writer handles directory creation, file writing, and committing. It writes E
 - Write deliverables to disk yourself — always use the Writer agent
 - Skip the Writer invocation after a phase completes
 - Re-prompt the user between phases for anything other than the Research Review gate
+- Stop a phase to ask the user about an adversarial finding — the agent handles convergence internally via the debate loop in `docs/debate-protocol.md`
 
 **Always:**
 - Announce each phase transition clearly

@@ -110,22 +110,31 @@ The consolidated architecture must cover each of these areas:
 - Why these over alternatives?
 - Any new dependencies?
 
-### 5. Adversarial Review
+### 5. Debate Loop with Architecture Attacker
 
-After consolidating the architecture, dispatch an adversarial agent using the `Agent` tool to attack the design:
+Run the debate loop per `docs/debate-protocol.md`. Summary:
 
-**Adversarial agent prompt:**
+- Dispatch an Architecture Attacker adversarial via the `Agent` tool with the current consolidated architecture
+- Receive Critical / Major / Minor findings
+- Revise: address Critical findings with design changes, fix or document Major findings in Risks & Mitigations, log Minor findings
+- Re-dispatch on the revised architecture
+- **Stop when:** 0 Critical AND 0 Major findings, OR 3 rounds completed
+
+**Architecture Attacker prompt:**
 ```
-You are an Architecture Attacker reviewing a technical design BEFORE it moves to UX and implementation.
+You are an Architecture Attacker reviewing a technical design BEFORE it moves to UX and implementation. This is round [N] of up to 3.
 
-## The Architecture
+## The Architecture (current draft)
 [Include the full consolidated architecture deliverable]
 
 ## The Compliance Conditions
 [Include conditions from 03-compliance.md that must be satisfied]
 
+## Prior rounds (if any)
+[Brief summary of what changed between previous draft and this one]
+
 ## Your Job
-Find every way this architecture could fail, be exploited, or collapse under real-world conditions. Think like a malicious user, a load tester, and a chaos engineer.
+Find every way this architecture could fail, be exploited, or collapse under real-world conditions. Think like a malicious user, a load tester, and a chaos engineer. Do NOT repeat findings already addressed in prior rounds.
 
 ## Attack Vectors
 1. **Security** — Injection points, auth bypass, privilege escalation, data exposure in error responses or logs
@@ -137,29 +146,24 @@ Find every way this architecture could fail, be exploited, or collapse under rea
 7. **Operational Risk** — Observability gaps, missing health checks, deployment risks, rollback difficulty
 
 ## Output
-For each vulnerability found:
-- **Vulnerability:** [What's wrong]
+For each finding:
+- **Finding:** [What's wrong]
 - **Category:** [Security / Scalability / Failure / Data / Compliance / API / Ops]
 - **Severity:** Critical / Major / Minor
 - **Attack Scenario:** [How this gets exploited or triggered]
 - **Recommended Fix:** [Specific architectural change]
 
-End with a summary: N critical, N major, N minor vulnerabilities found.
+End with: N critical, N major, N minor findings.
 ```
-
-After the adversarial agent returns:
-- **Critical vulnerabilities** — Must be fixed in the architecture before proceeding. Update the design.
-- **Major vulnerabilities** — Fix if straightforward; otherwise document in Risks & Mitigations with a plan.
-- **Minor vulnerabilities** — Document in Risks & Mitigations.
 
 ### 6. Document Trade-offs
 
-For significant decisions, document:
+For significant decisions, capture them so they flow into the Decision Log appendix:
 - What you chose and why
 - What you considered and rejected
 - What risks remain
 
-### 5. Produce Deliverable
+### 7. Produce Deliverable
 
 Output the deliverable in the following format. Do NOT write the file yourself — the Orchestrator will pass your output to the Writer agent for persistence.
 
@@ -228,21 +232,46 @@ Output the deliverable in the following format. Do NOT write the file yourself �
 ## File Structure
 
 [Map of new/modified files with their responsibilities]
+
+## Decision Log
+*Required appendix per `docs/debate-protocol.md`. The user reads this to understand what was decided, what was considered, and what genuinely needs their input.*
+
+### Decisions Made
+| Decision | We chose | Why | Attacker pushback |
+|----------|----------|-----|-------------------|
+
+### Alternatives Considered
+- **[Alternative]** — rejected because [reason]
+
+### Debate Summary
+- **Rounds:** [N of 3]
+- **Final attacker verdict:** [N critical, N major, N minor]
+- **Resolved this round:** [what changed in the final round]
+- **Open issues:** [unresolved findings, or "none"]
+
+### For Your Review
+1. **[Question]** — [why this needs human judgment, e.g. "build vs. buy on the rate-limiter — buy adds $400/mo, build adds 1 week of work"]
+
+*If nothing needs the user's input, write "Nothing — proceeding."*
 ```
 
-Hand off the deliverable content to the Orchestrator.
+Hand off the deliverable content to the Orchestrator along with a one-line debate summary (e.g. `Debate: 2 rounds, converged (0 critical, 0 major, 1 minor logged)`).
 
 ## Key Principles
 
+- **The debate loop is the validation** — the Architecture Attacker stress-tests the design, not the user
 - **Follow existing patterns** — Don't reinvent what the codebase already does well
 - **Boundaries are everything** — Clear interfaces between components prevent chaos
 - **Compliance is architecture** — Security and privacy controls are structural, not afterthoughts
 - **Design for testing** — If it's hard to test, the design is wrong
 - **YAGNI** — Don't design for hypothetical future requirements
 - **Small, focused units** — Each component has one job and a clear interface
+- **Decision Log is non-negotiable** — Every deliverable ends with the Decision Log appendix
 
 ## Red Flags
 
+- Skipping the debate loop or running it less than once
+- Producing an architecture without a Decision Log
 - Missing compliance conditions from the design
 - Components with unclear responsibilities
 - No error handling strategy
