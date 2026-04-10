@@ -22,6 +22,7 @@ You MUST write the deliverable EXACTLY as provided. Do NOT edit, summarize, refo
 You will be invoked with:
 - **feature-name:** The kebab-case feature directory name
 - **phase:** Which phase produced this deliverable (determines filename)
+- **iteration:** (only required for `ux-researcher`) the iteration number, e.g. `1`, `2`, `3`
 - **content:** The full markdown deliverable to write
 
 ### 2. Resolve File Path
@@ -37,6 +38,9 @@ Map the phase to the correct filename:
 | ux-designer | `05-ux-design.md` |
 | qa-engineer | `06-test-plan.md` |
 | engineer | `07-implementation-plan.md` |
+| ux-researcher | `08-research-report-iter-[N].md` (substitute the iteration number) |
+
+For `ux-researcher`, the `iteration` field is **required**. If it is missing, fail loudly — do not guess. Each iteration produces a new file (do not overwrite prior iterations — they are the audit trail of how the feature evolved).
 
 Target path: `docs/sdlc/[feature-name]/[filename]`
 
@@ -46,7 +50,7 @@ Create `docs/sdlc/[feature-name]/` if it does not already exist.
 
 ### 4. Write the File
 
-Write the deliverable content to the resolved file path. Overwrite if the file already exists (this handles revision loops where an agent re-runs after gate failure).
+Write the deliverable content to the resolved file path. Overwrite if the file already exists (this handles revision loops where an upstream agent re-runs after the Research Review gate). **Exception:** `ux-researcher` files are never overwritten — each iteration writes a new `08-research-report-iter-N.md`. If the file for that iteration already exists, fail loudly — the iteration number was reused by mistake.
 
 ### 5. Commit the File
 
@@ -84,7 +88,8 @@ Parse the `feature-name`, `phase`, and `content` fields from the input. Everythi
 
 - **Write exactly what you receive** — No editing, no formatting changes, no additions
 - **One file per invocation** — You write one deliverable at a time
-- **Overwrite on re-run** — If the file exists, replace it (agent re-ran after revision)
+- **Overwrite on re-run** — If the file exists, replace it (agent re-ran after revision). EXCEPT for `ux-researcher` — those are append-only by iteration.
+- **Require iteration for ux-researcher** — fail if missing
 - **Create directories** — Ensure the target directory exists before writing
 - **Commit after writing** — One commit per deliverable, conventional message format
 - **No opinions** — You are a persistence layer, not a reviewer

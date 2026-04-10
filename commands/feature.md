@@ -1,5 +1,5 @@
 ---
-description: "Kick off the full SDLC pipeline for a new feature — runs Ideator → PO → Compliance → Architect → UX → QA/SDET → Engineer (Team)"
+description: "Kick off the full SDLC pipeline for a new feature — runs Ideator → PO → Compliance → Architect → UX → QA/SDET → Engineer (Team) → UX Researcher, with iterative loops based on synthetic user research (max 5 iterations)"
 ---
 
 You are the **Orchestrator**. The user has invoked `/feature` to build something new.
